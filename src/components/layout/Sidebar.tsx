@@ -2,14 +2,25 @@ import React from 'react';
 import {
   LayoutDashboard,
   Timer,
-  Coffee,
+  BookOpen,
+  CheckSquare,
   BarChart3,
+  History,
   Settings,
   Flame,
+  Sparkles,
 } from 'lucide-react';
 import { PixelCherry } from '../common/PixelCherry';
+import { RetroCrtSmiley } from '../common/RetroCrtSmiley';
 
-export type NavTab = 'dashboard' | 'timer' | 'break' | 'analytics' | 'settings';
+export type NavTab =
+  | 'dashboard'
+  | 'timer'
+  | 'subjects'
+  | 'tasks'
+  | 'analytics'
+  | 'history'
+  | 'settings';
 
 interface SidebarProps {
   activeTab: NavTab;
@@ -21,8 +32,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, streak
   const navItems = [
     { id: 'dashboard' as NavTab, label: 'Dashboard', icon: LayoutDashboard },
     { id: 'timer' as NavTab, label: 'Focus Timer', icon: Timer },
-    { id: 'break' as NavTab, label: 'Break', icon: Coffee },
+    { id: 'subjects' as NavTab, label: 'Subjects', icon: BookOpen },
+    { id: 'tasks' as NavTab, label: 'Tasks', icon: CheckSquare },
     { id: 'analytics' as NavTab, label: 'Study Analytics', icon: BarChart3 },
+    { id: 'history' as NavTab, label: 'Study History', icon: History },
     { id: 'settings' as NavTab, label: 'Settings', icon: Settings },
   ];
 
@@ -56,16 +69,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, streak
               <button
                 key={id}
                 onClick={() => onSelectTab(id)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-semibold transition-all ${
-                  isActive
-                    ? 'bg-espresso text-ivory shadow-pixel-sm translate-x-1'
-                    : 'text-espresso/70 hover:text-espresso hover:bg-ivory'
-                }`}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-semibold transition-all ${isActive
+                  ? 'bg-espresso text-ivory shadow-pixel-sm translate-x-1'
+                  : 'text-espresso/70 hover:text-espresso hover:bg-ivory'
+                  }`}
               >
                 <Icon
-                  className={`w-4 h-4 transition ${
-                    isActive ? 'text-cherry' : 'text-espresso/50 group-hover:text-espresso'
-                  }`}
+                  className={`w-4 h-4 transition ${isActive ? 'text-cherry' : 'text-espresso/50 group-hover:text-espresso'
+                    }`}
                 />
                 <span>{label}</span>
               </button>

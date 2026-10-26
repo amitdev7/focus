@@ -1,10 +1,12 @@
 import React from 'react';
-import type { NavTab } from './Sidebar';
+import { NavTab } from './Sidebar';
 import {
   LayoutDashboard,
   Timer,
-  Coffee,
+  BookOpen,
+  CheckSquare,
   BarChart3,
+  History,
   Settings,
 } from 'lucide-react';
 
@@ -17,8 +19,10 @@ export const MobileNav: React.FC<MobileNavProps> = ({ activeTab, onSelectTab }) 
   const items = [
     { id: 'dashboard' as NavTab, label: 'Home', icon: LayoutDashboard },
     { id: 'timer' as NavTab, label: 'Timer', icon: Timer },
-    { id: 'break' as NavTab, label: 'Break', icon: Coffee },
+    { id: 'subjects' as NavTab, label: 'Subjects', icon: BookOpen },
+    { id: 'tasks' as NavTab, label: 'Tasks', icon: CheckSquare },
     { id: 'analytics' as NavTab, label: 'Stats', icon: BarChart3 },
+    { id: 'history' as NavTab, label: 'History', icon: History },
     { id: 'settings' as NavTab, label: 'Settings', icon: Settings },
   ];
 
@@ -30,9 +34,8 @@ export const MobileNav: React.FC<MobileNavProps> = ({ activeTab, onSelectTab }) 
           <button
             key={id}
             onClick={() => onSelectTab(id)}
-            className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition ${
-              isActive ? 'text-cherry font-bold' : 'text-espresso/50 hover:text-espresso'
-            }`}
+            className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl transition ${isActive ? 'text-cherry font-bold' : 'text-espresso/50 hover:text-espresso'
+              }`}
           >
             <Icon className="w-5 h-5" />
             <span className="text-[10px] tracking-tight">{label}</span>
