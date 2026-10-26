@@ -5,7 +5,7 @@ import type { ActiveTimerState, ThemeId, UserSettings } from '../../types';
 interface BreakTimerCardProps {
   timerState: ActiveTimerState;
   settings: UserSettings;
-  activeTheme: ThemeId;
+  activeTheme?: ThemeId;
   onStart: () => void;
   onPause: () => void;
   onResume: () => void;
@@ -16,7 +16,6 @@ interface BreakTimerCardProps {
 export const BreakTimerCard: React.FC<BreakTimerCardProps> = ({
   timerState,
   settings,
-  activeTheme,
   onStart,
   onPause,
   onResume,
@@ -43,7 +42,6 @@ export const BreakTimerCard: React.FC<BreakTimerCardProps> = ({
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blossom-light text-espresso text-xs font-semibold uppercase tracking-wider mb-2">
@@ -59,7 +57,6 @@ export const BreakTimerCard: React.FC<BreakTimerCardProps> = ({
         </div>
       </div>
 
-      {/* Break Presets Row */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         {presets.map(({ label, name, min }) => {
           const isSelected = isBreakActive && breakMinutes === min;
@@ -67,17 +64,15 @@ export const BreakTimerCard: React.FC<BreakTimerCardProps> = ({
             <button
               key={min}
               onClick={() => onSetBreakDuration(min)}
-              className={`p-4 rounded-3xl border text-left transition pixel-press ${
-                isSelected
+              className={`p-4 rounded-3xl border text-left transition pixel-press ${isSelected
                   ? 'bg-espresso text-ivory border-espresso shadow-pixel-sm'
                   : 'bg-white hover:bg-ivory text-espresso border-espresso/15 hover:border-espresso/35'
-              }`}
+                }`}
             >
               <div className="text-sm font-bold font-pixel">{label}</div>
               <div
-                className={`text-[11px] mt-1 ${
-                  isSelected ? 'text-ivory/70' : 'text-espresso/50'
-                }`}
+                className={`text-[11px] mt-1 ${isSelected ? 'text-ivory/70' : 'text-espresso/50'
+                  }`}
               >
                 {name}
               </div>
@@ -86,7 +81,6 @@ export const BreakTimerCard: React.FC<BreakTimerCardProps> = ({
         })}
       </div>
 
-      {/* Main Break Timer Card */}
       <div
         className="relative w-full rounded-3xl overflow-hidden border-2 border-espresso/25 shadow-editorial text-white min-h-[380px] flex flex-col items-center justify-center p-8 text-center"
         style={{
@@ -103,7 +97,6 @@ export const BreakTimerCard: React.FC<BreakTimerCardProps> = ({
             <span>Rest Mode Active</span>
           </div>
 
-          {/* Big Countdown Digits */}
           <div className="text-8xl sm:text-9xl md:text-[10rem] font-black tracking-tight leading-none drop-shadow-xl font-sans select-none my-4">
             {formatTime(timerState.remainingSec)}
           </div>
@@ -112,7 +105,6 @@ export const BreakTimerCard: React.FC<BreakTimerCardProps> = ({
             Step away from the screen, stretch, drink water, or take slow deep breaths.
           </p>
 
-          {/* Controls: Start/Pause and Reset */}
           <div className="flex items-center justify-center gap-4">
             {!timerState.isRunning ? (
               <button

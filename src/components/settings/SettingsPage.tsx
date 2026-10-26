@@ -1,10 +1,9 @@
 import React, { useState, useRef } from 'react';
-import { UserSettings, Subject, ThemeId } from '../../types';
+import type { UserSettings, ThemeId } from '../../types';
 import { StorageService } from '../../services/storage';
 import { soundService } from '../../services/sound';
 import { NotificationService } from '../../services/notification';
 import {
-  Settings,
   Bell,
   Volume2,
   Clock,
@@ -12,33 +11,28 @@ import {
   Palette,
   Download,
   Upload,
-  AlertTriangle,
   CheckCircle2,
-  Play,
+  Coffee,
   RotateCcw,
-  Sparkles,
 } from 'lucide-react';
 
 interface SettingsPageProps {
   settings: UserSettings;
-  subjects: Subject[];
   onUpdateSettings: (newSettings: UserSettings) => void;
-  onResetAllData: () => void;
+  onResetTimer: () => void;
   onDataImported: () => void;
 }
 
 export const SettingsPage: React.FC<SettingsPageProps> = ({
   settings,
-  subjects,
   onUpdateSettings,
-  onResetAllData,
+  onResetTimer,
   onDataImported,
 }) => {
   const [formData, setFormData] = useState<UserSettings>(settings);
   const [saveFeedback, setSaveFeedback] = useState(false);
+  const [resetTimerFeedback, setResetTimerFeedback] = useState(false);
   const [importStatus, setImportStatus] = useState<{ success: boolean; message: string } | null>(null);
-  const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
-  const [resetInputMatch, setResetInputMatch] = useState('');
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleSave = (newValues: Partial<UserSettings>) => {
@@ -91,16 +85,21 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const handleTriggerResetTimer = () => {
+    onResetTimer();
+    setResetTimerFeedback(true);
+    setTimeout(() => setResetTimerFeedback(false), 2500);
+  };
+
   return (
     <div className="space-y-8 max-w-4xl pb-12">
-      {/* Page Title */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl sm:text-3xl font-black text-espresso tracking-tight">
             Settings &amp; Preferences
           </h2>
           <p className="text-sm text-espresso/60 mt-1">
-            Personalize your study goals, timer rhythm, aesthetic themes, and data backup.
+            Personalize your study goals, timer presets, break durations, and aesthetic themes.
           </p>
         </div>
 
@@ -110,6 +109,34 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             <span>Preferences Saved</span>
           </div>
         )}
+      </div>
+
+      {/* QUICK TIMER CONTROLS: RESET TIMER OPTION */}
+      <div className="bg-white rounded-3xl p-6 border border-espresso/15 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <RotateCcw className="w-5 h-5 text-cherry" />
+            <h3 className="font-bold text-lg text-espresso">Reset Active Timer</h3>
+          </div>
+          <p className="text-xs text-espresso/60 mt-1">
+            Instantly restore the active countdown timer back to its initial starting duration.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          {resetTimerFeedback && (
+            <span className="text-xs font-semibold text-emerald-600 animate-fade-in">
+              Timer Reset!
+            </span>
+          )}
+          <button
+            onClick={handleTriggerResetTimer}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-espresso text-ivory text-xs font-semibold shadow-pixel-sm hover:translate-y-[-1px] transition pixel-press"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>Reset Timer</span>
+          </button>
+        </div>
       </div>
 
       {/* SECTION 1: PROFILE & STUDY GOALS */}
@@ -164,17 +191,17 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         </div>
       </div>
 
-      {/* SECTION 2: TIMER DURATIONS & PRESETS */}
+      {/* SECTION 2: FOCUS TIMER PRESETS */}
       <div className="bg-white rounded-3xl p-6 border border-espresso/15 shadow-sm space-y-5">
         <div className="flex items-center gap-2.5 pb-3 border-b border-espresso/10">
           <Clock className="w-5 h-5 text-sage" />
-          <h3 className="font-bold text-lg text-espresso">Timer Presets &amp; Behavior</h3>
+          <h3 className="font-bold text-lg text-espresso">Focus Timer Presets</h3>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="text-xs font-semibold uppercase text-espresso/60 block mb-1">
-              Pomodoro Focus (Minutes)
+              Pomodoro Focus Duration (Minutes)
             </label>
             <input
               type="number"
@@ -188,6 +215,36 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
 
           <div>
             <label className="text-xs font-semibold uppercase text-espresso/60 block mb-1">
+              Long Break Frequency (Every N Pomodoros)
+            </label>
+            <select
+              value={formData.timer.longBreakInterval}
+              onChange={(e) => handleTimerChange('longBreakInterval', parseInt(e.target.value) || 4)}
+              className="w-full px-4 py-2.5 rounded-xl border border-espresso/20 bg-ivory/50 text-espresso text-sm font-semibold focus:outline-none focus:border-espresso cursor-pointer"
+            >
+              <option value="2">Every 2 Pomodoros</option>
+              <option value="3">Every 3 Pomodoros</option>
+              <option value="4">Every 4 Pomodoros (Standard)</option>
+              <option value="5">Every 5 Pomodoros</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* SECTION 3: BREAK DURATIONS & SETTINGS */}
+      <div className="bg-white rounded-3xl p-6 border border-espresso/15 shadow-sm space-y-5">
+        <div className="flex items-center gap-2.5 pb-3 border-b border-espresso/10">
+          <Coffee className="w-5 h-5 text-cherry" />
+          <h3 className="font-bold text-lg text-espresso">Break Settings (Only Breaks of Time)</h3>
+        </div>
+
+        <p className="text-xs text-espresso/60">
+          Configure default break durations for your mental recovery periods.
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label className="text-xs font-semibold uppercase text-espresso/60 block mb-1">
               Short Break (Minutes)
             </label>
             <input
@@ -196,6 +253,20 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               max="60"
               value={formData.timer.shortBreakMinutes}
               onChange={(e) => handleTimerChange('shortBreakMinutes', parseInt(e.target.value) || 5)}
+              className="w-full px-4 py-2.5 rounded-xl border border-espresso/20 bg-ivory/50 text-espresso text-sm font-semibold focus:outline-none focus:border-espresso font-pixel"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold uppercase text-espresso/60 block mb-1">
+              Coffee Break (Minutes)
+            </label>
+            <input
+              type="number"
+              min="1"
+              max="60"
+              value={formData.timer.coffeeBreakMinutes || 10}
+              onChange={(e) => handleTimerChange('coffeeBreakMinutes', parseInt(e.target.value) || 10)}
               className="w-full px-4 py-2.5 rounded-xl border border-espresso/20 bg-ivory/50 text-espresso text-sm font-semibold focus:outline-none focus:border-espresso font-pixel"
             />
           </div>
@@ -215,42 +286,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-          <div>
-            <label className="text-xs font-semibold uppercase text-espresso/60 block mb-1">
-              Long Break Interval (Every N Pomodoros)
-            </label>
-            <select
-              value={formData.timer.longBreakInterval}
-              onChange={(e) => handleTimerChange('longBreakInterval', parseInt(e.target.value) || 4)}
-              className="w-full px-4 py-2.5 rounded-xl border border-espresso/20 bg-ivory/50 text-espresso text-sm font-semibold focus:outline-none focus:border-espresso cursor-pointer"
-            >
-              <option value="2">Every 2 Pomodoros</option>
-              <option value="3">Every 3 Pomodoros</option>
-              <option value="4">Every 4 Pomodoros (Standard)</option>
-              <option value="5">Every 5 Pomodoros</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="text-xs font-semibold uppercase text-espresso/60 block mb-1">
-              Default Starting Subject
-            </label>
-            <select
-              value={formData.defaultSubjectId}
-              onChange={(e) => handleSave({ defaultSubjectId: e.target.value })}
-              className="w-full px-4 py-2.5 rounded-xl border border-espresso/20 bg-ivory/50 text-espresso text-sm font-semibold focus:outline-none focus:border-espresso cursor-pointer"
-            >
-              {subjects.map((sub) => (
-                <option key={sub.id} value={sub.id}>
-                  {sub.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div className="flex flex-col sm:flex-row gap-4 pt-3 border-t border-espresso/5">
+        <div className="flex flex-col sm:flex-row gap-4 pt-2 border-t border-espresso/5">
           <label className="flex items-center gap-3 cursor-pointer">
             <input
               type="checkbox"
@@ -259,25 +295,13 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               className="w-4 h-4 rounded text-cherry focus:ring-cherry"
             />
             <span className="text-xs font-medium text-espresso">
-              Auto-start breaks after focus completes
-            </span>
-          </label>
-
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={formData.timer.autoStartPomodoros}
-              onChange={(e) => handleTimerChange('autoStartPomodoros', e.target.checked)}
-              className="w-4 h-4 rounded text-cherry focus:ring-cherry"
-            />
-            <span className="text-xs font-medium text-espresso">
-              Auto-start next focus after break ends (default disabled)
+              Auto-start break when focus session finishes
             </span>
           </label>
         </div>
       </div>
 
-      {/* SECTION 3: SOUND & NOTIFICATIONS */}
+      {/* SECTION 4: SOUND & NOTIFICATIONS */}
       <div className="bg-white rounded-3xl p-6 border border-espresso/15 shadow-sm space-y-5">
         <div className="flex items-center gap-2.5 pb-3 border-b border-espresso/10">
           <Volume2 className="w-5 h-5 text-blossom-dark" />
@@ -285,7 +309,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         </div>
 
         <div className="space-y-4">
-          {/* Sound Toggle & Volume */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-2xl bg-ivory/50 border border-espresso/10">
             <div>
               <div className="font-bold text-sm text-espresso">Sound Effects</div>
@@ -328,7 +351,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             </div>
           </div>
 
-          {/* Browser Notifications */}
           <div className="flex items-center justify-between p-4 rounded-2xl bg-ivory/50 border border-espresso/10">
             <div>
               <div className="font-bold text-sm text-espresso flex items-center gap-1.5">
@@ -355,7 +377,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         </div>
       </div>
 
-      {/* SECTION 4: THEMES & ACCESSIBILITY */}
+      {/* SECTION 5: THEMES & ACCESSIBILITY */}
       <div className="bg-white rounded-3xl p-6 border border-espresso/15 shadow-sm space-y-5">
         <div className="flex items-center gap-2.5 pb-3 border-b border-espresso/10">
           <Palette className="w-5 h-5 text-lavender-dark" />
@@ -365,19 +387,19 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           {(
             [
-              { id: 'cherry-blossom', label: 'Cherry Blossom', desc: 'Scenic pink lake' },
-              { id: 'pixel-cherry', label: 'Pixel Cherry', desc: 'Minimal ivory grid' },
-              { id: 'retro-crt', label: 'Retro CRT', desc: 'Rainbow CRT screen' },
-              { id: 'paper-grid', label: 'Paper & Grid', desc: 'Editorial warm graph' },
-              { id: 'midnight-focus', label: 'Midnight Focus', desc: 'Dark low distraction' },
-            ] as const
+              { id: 'cherry-blossom' as ThemeId, label: 'Cherry Blossom', desc: 'Scenic pink lake' },
+              { id: 'pixel-cherry' as ThemeId, label: 'Pixel Cherry', desc: 'Minimal ivory grid' },
+              { id: 'retro-crt' as ThemeId, label: 'Retro CRT', desc: 'Rainbow CRT screen' },
+              { id: 'paper-grid' as ThemeId, label: 'Paper & Grid', desc: 'Editorial warm graph' },
+              { id: 'midnight-focus' as ThemeId, label: 'Midnight Focus', desc: 'Dark low distraction' },
+            ]
           ).map(({ id, label, desc }) => (
             <button
               key={id}
               onClick={() => handleSave({ theme: id })}
               className={`p-3 rounded-2xl border text-left transition pixel-press ${formData.theme === id
-                ? 'bg-espresso text-ivory border-espresso shadow-pixel-sm'
-                : 'bg-ivory hover:bg-white text-espresso border-espresso/15 hover:border-espresso/35'
+                  ? 'bg-espresso text-ivory border-espresso shadow-pixel-sm'
+                  : 'bg-ivory hover:bg-white text-espresso border-espresso/15 hover:border-espresso/35'
                 }`}
             >
               <div className="text-xs font-bold">{label}</div>
@@ -406,7 +428,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         </div>
       </div>
 
-      {/* SECTION 5: DATA BACKUP, EXPORT & RESTORE */}
+      {/* SECTION 6: DATA BACKUP & RESTORE */}
       <div className="bg-white rounded-3xl p-6 border border-espresso/15 shadow-sm space-y-5">
         <div className="flex items-center gap-2.5 pb-3 border-b border-espresso/10">
           <Download className="w-5 h-5 text-emerald-600" />
@@ -414,18 +436,17 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         </div>
 
         <p className="text-xs text-espresso/70">
-          Your study records and timer data are stored locally in your browser with zero external tracking.
-          Export regular JSON backups to save your progress or transfer between devices.
+          Export your study records and settings as a clean JSON backup to preserve your history.
         </p>
 
         {importStatus && (
           <div
             className={`p-3 rounded-xl text-xs font-semibold flex items-center gap-2 ${importStatus.success
-              ? 'bg-sage/20 text-sage-dark border border-sage/30'
-              : 'bg-rose-100 text-rose-800 border border-rose-200'
+                ? 'bg-sage/20 text-sage-dark border border-sage/30'
+                : 'bg-rose-100 text-rose-800 border border-rose-200'
               }`}
           >
-            {importStatus.success ? <CheckCircle2 className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
+            <CheckCircle2 className="w-4 h-4" />
             <span>{importStatus.message}</span>
           </div>
         )}
@@ -452,76 +473,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           </label>
         </div>
       </div>
-
-      {/* SECTION 6: DANGER ZONE (RESET DATA) */}
-      <div className="bg-rose-50/60 rounded-3xl p-6 border-2 border-rose-200 shadow-sm space-y-4">
-        <div className="flex items-center gap-2 text-rose-800">
-          <AlertTriangle className="w-5 h-5" />
-          <h3 className="font-bold text-lg">Danger Zone: Reset Study History</h3>
-        </div>
-
-        <p className="text-xs text-rose-900/80 leading-relaxed">
-          Resetting will permanently erase all completed sessions, subjects, and study tasks.
-          This action <strong>cannot be undone</strong> unless you have previously downloaded an exported backup file.
-        </p>
-
-        <button
-          onClick={() => {
-            setResetInputMatch('');
-            setShowResetConfirmModal(true);
-          }}
-          className="px-5 py-2.5 rounded-2xl bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 shadow-sm transition pixel-press"
-        >
-          Reset All Study Data...
-        </button>
-      </div>
-
-      {/* Danger Zone Confirmation Modal */}
-      {showResetConfirmModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-espresso/60 backdrop-blur-sm animate-fade-in">
-          <div className="relative w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl border-2 border-rose-600 text-center">
-            <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-3">
-              <AlertTriangle className="w-6 h-6" />
-            </div>
-
-            <h3 className="text-xl font-bold text-espresso">Confirm Full Data Reset</h3>
-            <p className="text-xs text-espresso/70 mt-2">
-              To prevent accidental deletion, please type <strong className="font-mono text-rose-600">RESET</strong> in the field below.
-            </p>
-
-            <div className="my-4">
-              <input
-                type="text"
-                placeholder="Type RESET"
-                value={resetInputMatch}
-                onChange={(e) => setResetInputMatch(e.target.value)}
-                className="w-full text-center px-4 py-2.5 rounded-xl border border-rose-300 font-mono font-bold tracking-widest text-espresso focus:outline-none focus:border-rose-600"
-              />
-            </div>
-
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setShowResetConfirmModal(false)}
-                className="flex-1 py-2.5 rounded-xl border border-espresso/20 text-xs font-semibold text-espresso hover:bg-ivory"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={resetInputMatch !== 'RESET'}
-                onClick={() => {
-                  onResetAllData();
-                  setShowResetConfirmModal(false);
-                }}
-                className="flex-1 py-2.5 rounded-xl bg-rose-600 disabled:opacity-40 text-white text-xs font-bold hover:bg-rose-700 shadow-sm"
-              >
-                Permanently Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
