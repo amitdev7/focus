@@ -1,4 +1,4 @@
-export type TimerMode = 'pomodoro' | 'shortBreak' | 'longBreak' | 'custom';
+export type TimerMode = 'pomodoro' | 'shortBreak' | 'longBreak' | 'custom' | 'break';
 
 export type SessionStatus = 'completed' | 'interrupted' | 'manual_stop';
 
@@ -7,8 +7,8 @@ export type ThemeId = 'cherry-blossom' | 'pixel-cherry' | 'retro-crt' | 'paper-g
 export interface Subject {
   id: string;
   name: string;
-  color: string; // Hex color code
-  weeklyGoalHours?: number; // Optional weekly goal in hours
+  color: string;
+  weeklyGoalHours?: number;
   createdAt: number;
 }
 
@@ -28,7 +28,7 @@ export interface StudySession {
   endTime: number;         // epoch ms
   plannedDuration: number; // in seconds
   actualDuration: number;  // actual focused seconds (excluding pauses)
-  subjectId: string;
+  subjectId?: string;
   taskId?: string;
   mode: TimerMode;
   status: SessionStatus;
@@ -38,12 +38,13 @@ export interface StudySession {
 export interface TimerSettings {
   pomodoroMinutes: number;
   shortBreakMinutes: number;
+  coffeeBreakMinutes: number;
   longBreakMinutes: number;
-  longBreakInterval: number; // every N pomodoros
+  longBreakInterval: number;
   autoStartBreaks: boolean;
   autoStartPomodoros: boolean;
   soundEnabled: boolean;
-  soundVolume: number; // 0 to 1
+  soundVolume: number;
   notificationsEnabled: boolean;
 }
 
@@ -54,15 +55,15 @@ export interface UserSettings {
   theme: ThemeId;
   reducedMotion: boolean;
   lowDistractionBackground: boolean;
-  defaultSubjectId: string;
+  defaultSubjectId?: string;
   timer: TimerSettings;
 }
 
 export interface StoredData {
   version: number;
   userSettings: UserSettings;
-  subjects: Subject[];
-  tasks: Task[];
+  subjects?: Subject[];
+  tasks?: Task[];
   sessions: StudySession[];
 }
 
@@ -72,10 +73,10 @@ export interface ActiveTimerState {
   isPaused: boolean;
   totalDurationSec: number;
   remainingSec: number;
-  targetEndTime: number | null; // epoch ms when running
-  accumulatedActiveSec: number;  // active seconds counted so far
+  targetEndTime: number | null;
+  accumulatedActiveSec: number;
   pausedAt: number | null;
-  subjectId: string;
+  subjectId?: string;
   taskId?: string;
   pomodoroCount: number;
   startedAt: number | null;

@@ -2,25 +2,14 @@ import React from 'react';
 import {
   LayoutDashboard,
   Timer,
-  BookOpen,
-  CheckSquare,
+  Coffee,
   BarChart3,
-  History,
   Settings,
   Flame,
-  Sparkles,
 } from 'lucide-react';
 import { PixelCherry } from '../common/PixelCherry';
-import { RetroCrtSmiley } from '../common/RetroCrtSmiley';
 
-export type NavTab =
-  | 'dashboard'
-  | 'timer'
-  | 'subjects'
-  | 'tasks'
-  | 'analytics'
-  | 'history'
-  | 'settings';
+export type NavTab = 'dashboard' | 'timer' | 'break' | 'analytics' | 'settings';
 
 interface SidebarProps {
   activeTab: NavTab;
@@ -32,10 +21,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, streak
   const navItems = [
     { id: 'dashboard' as NavTab, label: 'Dashboard', icon: LayoutDashboard },
     { id: 'timer' as NavTab, label: 'Focus Timer', icon: Timer },
-    { id: 'subjects' as NavTab, label: 'Subjects', icon: BookOpen },
-    { id: 'tasks' as NavTab, label: 'Tasks', icon: CheckSquare },
+    { id: 'break' as NavTab, label: 'Break', icon: Coffee },
     { id: 'analytics' as NavTab, label: 'Study Analytics', icon: BarChart3 },
-    { id: 'history' as NavTab, label: 'Study History', icon: History },
     { id: 'settings' as NavTab, label: 'Settings', icon: Settings },
   ];
 

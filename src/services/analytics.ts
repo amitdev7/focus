@@ -1,22 +1,13 @@
-import { StudySession, Subject, UserSettings } from '../types';
+import type { StudySession, UserSettings } from '../types';
 
 export interface DayActivity {
-  dateStr: string;        // YYYY-MM-DD
-  dayLabel: string;       // Mon, Tue, etc.
-  dayNumber: number;      // 1-31
-  durationSec: number;    // total focused seconds
+  dateStr: string;
+  dayLabel: string;
+  dayNumber: number;
+  durationSec: number;
   durationMinutes: number;
   sessionCount: number;
   isToday: boolean;
-}
-
-export interface SubjectStat {
-  subjectId: string;
-  subjectName: string;
-  color: string;
-  durationSec: number;
-  sessionCount: number;
-  percentage: number;
 }
 
 export interface AnalyticsSummary {
@@ -25,21 +16,19 @@ export interface AnalyticsSummary {
   todayCompletedCount: number;
   todayAvgDurationMinutes: number;
   todayGoalPercent: number;
-  todaySubjectBreakdown: SubjectStat[];
 
   // Week
   weekDurationSec: number;
   weekDailyAvgSec: number;
   lastWeekDurationSec: number;
-  weekComparisonPercent: number; // e.g. +15%
-  mostStudiedSubject: SubjectStat | null;
-  weeklyDays: DayActivity[]; // 7 days (e.g. Mon -> Sun of current week)
+  weekComparisonPercent: number;
+  weeklyDays: DayActivity[];
 
   // Month
   monthDurationSec: number;
   monthActiveDaysCount: number;
   monthTotalDays: number;
-  monthHeatmapDays: DayActivity[]; // All days in current month
+  monthHeatmapDays: DayActivity[];
   currentStreakDays: number;
   longestStreakDays: number;
   monthlyTrend: 'increasing' | 'steady' | 'decreasing';
@@ -59,16 +48,14 @@ function formatDateKey(date: Date): string {
 
 export function computeAnalytics(
   sessions: StudySession[],
-  subjects: Subject[],
   settings: UserSettings
 ): AnalyticsSummary {
   const now = new Date();
   const todayKey = formatDateKey(now);
-  const subjectsMap = new Map(subjects.map((s) => [s.id, s]));
 
   // Filter to valid focus sessions with actual duration
   const validSessions = sessions.filter(
-    (s) => s.actualDuration > 0 && s.mode !== 'shortBreak' && s.mode !== 'longBreak'
+    (s) => s.actualDuration > 0 && s.mode !== 'shortBreak' && s.mode !== 'longBreak' && s.mode !== 'break'
   );
 
   // Group sessions by date
@@ -90,39 +77,15 @@ export function computeAnalytics(
   const dailyGoalSec = (settings.dailyGoalHours || 3) * 3600;
   const todayGoalPercent = Math.min(100, Math.round((todayDurationSec / dailyGoalSec) * 100));
 
-  // Today Subject Breakdown
-  const todaySubjMap = new Map<string, { duration: number; count: number }>();
-  todaySessions.forEach((s) => {
-    const cur = todaySubjMap.get(s.subjectId) || { duration: 0, count: 0 };
-    cur.duration += s.actualDuration;
-    cur.count += 1;
-    todaySubjMap.set(s.subjectId, cur);
-  });
-
-  const todaySubjectBreakdown: SubjectStat[] = Array.from(todaySubjMap.entries()).map(
-    ([id, { duration, count }]) => {
-      const subj = subjectsMap.get(id);
-      return {
-        subjectId: id,
-        subjectName: subj?.name || 'Unknown',
-        color: subj?.color || '#92AA7B',
-        durationSec: duration,
-        sessionCount: count,
-        percentage: todayDurationSec > 0 ? Math.round((duration / todayDurationSec) * 100) : 0,
-      };
-    }
-  );
-
   // 2. WEEKLY ANALYTICS (Current Week: Monday through Sunday)
-  const currentDayOfWeek = now.getDay(); // 0 is Sunday, 1 is Monday
-  const distanceToMonday = (currentDayOfWeek + 6) % 7; // days since Monday
+  const currentDayOfWeek = now.getDay();
+  const distanceToMonday = (currentDayOfWeek + 6) % 7;
   const monday = new Date(now);
   monday.setDate(now.getDate() - distanceToMonday);
   monday.setHours(0, 0, 0, 0);
 
   const weeklyDays: DayActivity[] = [];
   let weekDurationSec = 0;
-  const weekSubjMap = new Map<string, { duration: number; count: number }>();
 
   for (let i = 0; i < 7; i++) {
     const day = new Date(monday);
@@ -131,13 +94,6 @@ export function computeAnalytics(
     const daySessions = sessionsByDate.get(dKey) || [];
     const durSec = daySessions.reduce((acc, s) => acc + s.actualDuration, 0);
     weekDurationSec += durSec;
-
-    daySessions.forEach((s) => {
-      const cur = weekSubjMap.get(s.subjectId) || { duration: 0, count: 0 };
-      cur.duration += s.actualDuration;
-      cur.count += 1;
-      weekSubjMap.set(s.subjectId, cur);
-    });
 
     weeklyDays.push({
       dateStr: dKey,
@@ -150,7 +106,6 @@ export function computeAnalytics(
     });
   }
 
-  // Days elapsed in current week so far (1 to 7)
   const daysElapsedThisWeek = distanceToMonday + 1;
   const weekDailyAvgSec = Math.round(weekDurationSec / daysElapsedThisWeek);
 
@@ -170,24 +125,6 @@ export function computeAnalytics(
       : weekDurationSec > 0
       ? 100
       : 0;
-
-  // Most Studied Subject This Week
-  let mostStudiedSubject: SubjectStat | null = null;
-  let maxWeekSubjDur = -1;
-  weekSubjMap.forEach(({ duration, count }, id) => {
-    if (duration > maxWeekSubjDur) {
-      maxWeekSubjDur = duration;
-      const subj = subjectsMap.get(id);
-      mostStudiedSubject = {
-        subjectId: id,
-        subjectName: subj?.name || 'Unknown',
-        color: subj?.color || '#3B82F6',
-        durationSec: duration,
-        sessionCount: count,
-        percentage: weekDurationSec > 0 ? Math.round((duration / weekDurationSec) * 100) : 0,
-      };
-    }
-  });
 
   // 3. MONTHLY ANALYTICS (Current Month Heatmap)
   const year = now.getFullYear();
@@ -220,12 +157,10 @@ export function computeAnalytics(
   }
 
   // 4. STREAKS
-  // Calculate consecutive days studying backwards from today or yesterday
   let currentStreakDays = 0;
-  let checkDay = new Date(now);
+  const checkDay = new Date(now);
   const todayHasActivity = (sessionsByDate.get(todayKey) || []).length > 0;
   if (!todayHasActivity) {
-    // If not studied today yet, check if studied yesterday
     checkDay.setDate(checkDay.getDate() - 1);
   }
 
@@ -240,7 +175,6 @@ export function computeAnalytics(
     }
   }
 
-  // Calculate longest streak across history
   const allDateKeys = Array.from(sessionsByDate.keys()).sort();
   let longestStreakDays = 0;
   let tempStreak = 0;
@@ -266,7 +200,6 @@ export function computeAnalytics(
     }
   });
 
-  // Monthly trend
   const monthlyTrend: 'increasing' | 'steady' | 'decreasing' =
     weekDurationSec > lastWeekDurationSec * 1.1
       ? 'increasing'
@@ -282,13 +215,11 @@ export function computeAnalytics(
     todayCompletedCount,
     todayAvgDurationMinutes,
     todayGoalPercent,
-    todaySubjectBreakdown,
 
     weekDurationSec,
     weekDailyAvgSec,
     lastWeekDurationSec,
     weekComparisonPercent,
-    mostStudiedSubject,
     weeklyDays,
 
     monthDurationSec,
